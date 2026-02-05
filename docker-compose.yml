@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  vk_bot:
+    build:
+      context: ./vk_bot
+    env_file:
+      - .env
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 30s
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/openapi.json', timeout=2)",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    ports:
+      - "81:8000"
