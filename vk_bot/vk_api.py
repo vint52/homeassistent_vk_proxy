@@ -12,6 +12,21 @@ class VkApiError(RuntimeError):
     pass
 
 
+def _summarize_response(response: httpx.Response) -> str:
+    content_type = response.headers.get("Content-Type", "unknown")
+    summary_parts = [f"HTTP {response.status_code}", f"content-type {content_type}"]
+    try:
+        text = response.text.strip()
+    except Exception:
+        text = ""
+    if text:
+        snippet = " ".join(text.split())
+        if len(snippet) > 200:
+            snippet = f"{snippet[:200]}..."
+        summary_parts.append(f"body: {snippet}")
+    return ", ".join(summary_parts)
+
+
 def _method_url(settings: Settings, method: str) -> str:
     base_url = settings.vk_api_url.rsplit("/", 1)[0]
     return f"{base_url}/{method}"
@@ -59,10 +74,15 @@ async def _post_vk_method(
     except httpx.RequestError as exc:
         raise VkApiError("Failed to reach VK API") from exc
 
+    if response.status_code >= 400:
+        raise VkApiError(f"VK API HTTP error ({_summarize_response(response)})")
+
     try:
         response_data = response.json()
     except ValueError as exc:
-        raise VkApiError("Invalid response from VK API") from exc
+        raise VkApiError(
+            f"Invalid response from VK API ({_summarize_response(response)})"
+        ) from exc
 
     _raise_if_vk_error(response_data, method)
     return response_data
@@ -108,11 +128,15 @@ async def _download_image(
         raise VkApiError("Failed to download image") from exc
 
     if response.status_code >= 400:
-        raise VkApiError("Failed to download image")
+        raise VkApiError(
+            f"Failed to download image ({_summarize_response(response)})"
+        )
 
     content_type = response.headers.get("Content-Type")
     if content_type and not content_type.lower().startswith("image/"):
-        raise VkApiError("URL does not point to an image")
+        raise VkApiError(
+            f"URL does not point to an image (content-type {content_type})"
+        )
 
     content = response.content
     if not content:
@@ -131,7 +155,9 @@ async def _download_video(
         raise VkApiError("Failed to download video") from exc
 
     if response.status_code >= 400:
-        raise VkApiError("Failed to download video")
+        raise VkApiError(
+            f"Failed to download video ({_summarize_response(response)})"
+        )
 
     content_type = response.headers.get("Content-Type")
     if content_type:
@@ -140,7 +166,9 @@ async def _download_video(
             normalized.startswith("video/")
             or normalized.startswith("application/octet-stream")
         ):
-            raise VkApiError("URL does not point to a video")
+            raise VkApiError(
+                f"URL does not point to a video (content-type {content_type})"
+            )
 
     content = response.content
     if not content:

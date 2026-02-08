@@ -125,3 +125,12 @@ service: rest_command.vk_send_video
 data:
   video: "http://<FRIGATE_HOST:PORT>/api/events/ID/clip.mp4"  # адрес сервиса Frigate
 ```
+
+## Troubleshooting
+
+- `502 Bad Gateway` means the proxy hit an error; check the JSON body for details.
+  - `wget --content-on-error -O - ...`
+  - `curl -sS -D - -o - ...`
+- Make sure the media URL is reachable from the proxy container and returns a
+  `video/*` or `image/*` content-type.
+- For long downloads, increase `VK_REQUEST_TIMEOUT` in `.env`.
