@@ -3,6 +3,12 @@
 Сервис-прокси для отправки в ВК сообщений, фото и видео (а также постов на
 стену сообщества) по HTTP.
 
+## Мотивация
+
+Цель создания сервиса — проблема с белыми списками в РФ: ВК входит в белый
+список, поэтому отправка возможна даже в моменты, когда другие сайты не
+работают.
+
 ## Пример .env
 
 Файл `.env` должен лежать в корне проекта (его читает `docker-compose.yml`).
@@ -104,8 +110,10 @@ rest_command:
     method: POST
     content_type: "application/json"
     payload: >
-      {"token":"<INTERNAL_TOKEN>","message": {{ message | tojson }} }
+      {"token":"<INTERNAL_TOKEN>","message": {{ message | tojson }},"image": {{ image | default(none) | tojson }} }
 ```
+
+Поле `image` опционально — если фото не нужно, его можно не передавать.
 
 ### Как вызывать
 
@@ -124,6 +132,11 @@ data:
 service: rest_command.vk_send_video
 data:
   video: "http://<FRIGATE_HOST:PORT>/api/events/ID/clip.mp4"  # адрес сервиса Frigate
+
+service: rest_command.vk_send_post
+data:
+  message: "Пост с картинкой"
+  image: "http://<FRIGATE_HOST:PORT>/api/events/ID/snapshot.jpg?bbox=1&crop=0"
 ```
 
 ## Troubleshooting

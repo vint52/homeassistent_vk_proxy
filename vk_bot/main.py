@@ -48,7 +48,11 @@ async def send_post(
         raise HTTPException(status_code=401, detail="Invalid token")
 
     try:
-        return await send_vk_post(settings, payload.message)
+        return await send_vk_post(
+            settings,
+            payload.message,
+            str(payload.image) if payload.image else None,
+        )
     except VkApiError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 

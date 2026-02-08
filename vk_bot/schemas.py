@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, HttpUrl
 
 
@@ -19,3 +21,4 @@ class SendVideoRequest(BaseModel):
 class SendPostRequest(BaseModel):
     token: str
     message: str
+    image: Optional[HttpUrl] = None

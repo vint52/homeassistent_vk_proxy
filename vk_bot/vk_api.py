@@ -47,14 +47,18 @@ def _extract_response(data: Dict[str, Any]) -> Any:
     return data["response"]
 
 
-def _get_group_owner_id(settings: Settings) -> int:
+def _get_group_id(settings: Settings) -> int:
     group_id = settings.vk_group_id
     if not group_id:
         raise ConfigError("VK_GROUP_ID is not set")
     try:
-        return -abs(int(group_id.strip()))
+        return abs(int(group_id.strip()))
     except ValueError as exc:
         raise ConfigError("VK_GROUP_ID must be an integer") from exc
+
+
+def _get_group_owner_id(settings: Settings) -> int:
+    return -_get_group_id(settings)
 
 
 async def _post_vk_method(
@@ -99,7 +103,9 @@ async def send_message(settings: Settings, message: str) -> Dict[str, Any]:
         return await _post_vk_method(settings, "messages.send", data, client)
 
 
-async def send_post(settings: Settings, message: str) -> Dict[str, Any]:
+async def send_post(
+    settings: Settings, message: str, image_url: Optional[str] = None
+) -> Dict[str, Any]:
     data = {
         "owner_id": _get_group_owner_id(settings),
         "from_group": 1,
@@ -107,7 +113,77 @@ async def send_post(settings: Settings, message: str) -> Dict[str, Any]:
     }
 
     async with httpx.AsyncClient(timeout=settings.request_timeout) as client:
+        if image_url:
+            data["attachments"] = await _upload_wall_photo(settings, image_url, client)
         return await _post_vk_method(settings, "wall.post", data, client)
+
+
+async def _upload_wall_photo(
+    settings: Settings, image_url: str, client: httpx.AsyncClient
+) -> str:
+    image_bytes, content_type, filename = await _download_image(image_url, client)
+    group_id = _get_group_id(settings)
+
+    upload_data = await _post_vk_method(
+        settings,
+        "photos.getWallUploadServer",
+        {"group_id": group_id},
+        client,
+    )
+    upload_info = _extract_response(upload_data)
+    upload_url = upload_info.get("upload_url")
+    if not upload_url:
+        raise VkApiError("Upload URL not received from VK API")
+
+    try:
+        upload_response = await client.post(
+            upload_url,
+            files={
+                "photo": (
+                    filename,
+                    image_bytes,
+                    content_type or "application/octet-stream",
+                )
+            },
+        )
+    except httpx.RequestError as exc:
+        raise VkApiError("Failed to upload image to VK") from exc
+
+    try:
+        upload_payload = upload_response.json()
+    except ValueError as exc:
+        raise VkApiError("Invalid upload response from VK API") from exc
+
+    for key in ("server", "photo", "hash"):
+        if key not in upload_payload:
+            raise VkApiError("Invalid upload response from VK API")
+
+    save_data = await _post_vk_method(
+        settings,
+        "photos.saveWallPhoto",
+        {
+            "group_id": group_id,
+            "server": upload_payload["server"],
+            "photo": upload_payload["photo"],
+            "hash": upload_payload["hash"],
+        },
+        client,
+    )
+    save_response = _extract_response(save_data)
+    if not save_response:
+        raise VkApiError("Image was not saved by VK API")
+
+    photo_info = save_response[0]
+    owner_id = photo_info.get("owner_id")
+    photo_id = photo_info.get("id")
+    if owner_id is None or photo_id is None:
+        raise VkApiError("Invalid photo data from VK API")
+
+    access_key = photo_info.get("access_key")
+    attachment = f"photo{owner_id}_{photo_id}"
+    if access_key:
+        attachment = f"{attachment}_{access_key}"
+    return attachment
 
 
 def _filename_from_url(url: str, content_type: Optional[str]) -> str:

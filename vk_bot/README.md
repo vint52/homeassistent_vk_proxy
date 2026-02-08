@@ -51,19 +51,23 @@ curl -X POST http://localhost:80/send_message \
 ```json
 {
   "token": "INTERNAL_TOKEN",
-  "message": "New community post"
+  "message": "New community post",
+  "image": "https://example.com/image.jpg"
 }
 ```
+
+The `image` field is optional. Omit it if you want a text-only post.
 
 Example:
 
 ```bash
 curl -X POST http://localhost:80/send_post \
   -H "Content-Type: application/json" \
-  -d '{"token":"INTERNAL_TOKEN","message":"New community post"}'
+  -d '{"token":"INTERNAL_TOKEN","message":"New community post","image":"https://example.com/image.jpg"}'
 ```
 
 Note: `/send_post` requires a community access token with the `wall` permission.
+If you pass `image`, the token must also include the `photos` permission.
 
 `POST /send_image` with JSON body:
 
