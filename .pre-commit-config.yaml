@@ -1,0 +1,13 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.0
+    hooks:
+      - id: ruff
+        args: ["--config", "vk_bot/pyproject.toml"]
+        files: ^vk_bot/
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.19.1
+    hooks:
+      - id: mypy
+        args: ["--config-file", "vk_bot/pyproject.toml"]
+        files: ^vk_bot/

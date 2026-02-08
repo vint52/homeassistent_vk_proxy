@@ -10,10 +10,12 @@
 
 ```
 INTERNAL_TOKEN=change-me
+HOST_PORT=81
 VK_ACCESS_TOKEN=vk-access-token
 VK_PEER_ID=123456789
 VK_GROUP_ID=123456789
 VK_API_VERSION=5.131
+VK_REQUEST_TIMEOUT=30
 ```
 
 ## Настройка ВК
@@ -60,10 +62,12 @@ VK_API_VERSION=5.131
 
 - `INTERNAL_TOKEN` — секретный токен, который должен передаваться в поле
   `token` во всех HTTP-запросах к этому сервису.
+- `HOST_PORT` — внешний порт, на котором доступен сервис (по умолчанию `81`).
 - `VK_ACCESS_TOKEN` — токен доступа сообщества, созданный в "Работе с API".
 - `VK_PEER_ID` — получатель сообщений: ID пользователя или peer_id беседы.
 - `VK_GROUP_ID` — числовой ID сообщества; нужен для публикации постов на стене.
 - `VK_API_VERSION` — версия VK API (по умолчанию используется `5.131`).
+- `VK_REQUEST_TIMEOUT` — таймаут запросов к VK API в секундах (по умолчанию `30`).
 
 ## Home Assistant
 

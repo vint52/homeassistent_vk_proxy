@@ -2,3 +2,5 @@ fastapi
 httpx
 uvicorn[standard]
 python-dotenv
+mypy
+ruff
