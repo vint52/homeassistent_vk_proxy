@@ -122,7 +122,7 @@ rest_command:
     method: POST
     content_type: "application/json"
     payload: >
-      {"token":"<INTERNAL_TOKEN>","video": {{ video | tojson }} }
+      {"token":"<INTERNAL_TOKEN>","video": {{ video | tojson }},"type":"video" }
 
   vk_send_post:
     url: "http://<VK_PROXY_HOST:PORT>/send_post"
@@ -151,6 +151,7 @@ data:
 service: rest_command.vk_send_video
 data:
   video: "http://<FRIGATE_HOST:PORT>/api/events/ID/clip.mp4"  # адрес сервиса Frigate
+  # type: "document"  # опционально: "video" (по умолчанию) или "document"
 
 service: rest_command.vk_send_post
 data:

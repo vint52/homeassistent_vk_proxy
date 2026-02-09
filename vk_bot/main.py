@@ -82,6 +82,8 @@ async def send_video(
         raise HTTPException(status_code=401, detail="Invalid token")
 
     try:
-        return await run_in_threadpool(send_video_url, settings, str(payload.video))
+        return await run_in_threadpool(
+            send_video_url, settings, str(payload.video), payload.type
+        )
     except VkApiError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc

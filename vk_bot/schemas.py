@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, HttpUrl
 
@@ -16,6 +16,7 @@ class SendImageRequest(BaseModel):
 class SendVideoRequest(BaseModel):
     token: str
     video: HttpUrl
+    type: Literal["video", "document"] = "video"
 
 
 class SendPostRequest(BaseModel):

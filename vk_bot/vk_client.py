@@ -278,12 +278,26 @@ def send_image_url(settings: Settings, image_url: str) -> Dict[str, Any]:
     return _send_message(settings, vk_session, attachment=attachment)
 
 
-def send_video_url(settings: Settings, video_url: str) -> Dict[str, Any]:
-    vk_session = _vk_session(settings, settings.vk_access_token)
+def send_video_url(
+    settings: Settings, video_url: str, send_type: str = "video"
+) -> Dict[str, Any]:
     video_bytes, _content_type, filename = _download_video(
         video_url, settings.request_timeout
     )
 
+    if send_type == "document":
+        vk_session = _vk_session(settings, settings.vk_access_token)
+        return _send_video_as_document(settings, vk_session, video_bytes, filename)
+
+    if settings.vk_wall_access_token:
+        upload_session = _vk_session(settings, settings.vk_wall_access_token)
+        attachment = _save_video_attachment(
+            settings, upload_session, video_bytes, filename
+        )
+        send_session = _vk_session(settings, settings.vk_access_token)
+        return _send_message(settings, send_session, attachment=attachment)
+
+    vk_session = _vk_session(settings, settings.vk_access_token)
     try:
         return _send_video_via_save(settings, vk_session, video_bytes, filename)
     except VkApiError as exc:
@@ -299,6 +313,16 @@ def _send_video_via_save(
     video_bytes: bytes,
     filename: str,
 ) -> Dict[str, Any]:
+    attachment = _save_video_attachment(settings, vk_session, video_bytes, filename)
+    return _send_message(settings, vk_session, attachment=attachment)
+
+
+def _save_video_attachment(
+    settings: Settings,
+    vk_session: VkApi,
+    video_bytes: bytes,
+    filename: str,
+) -> str:
     upload = _vk_upload(settings, vk_session)
     file_obj = _file_from_bytes(video_bytes, filename)
 
@@ -308,14 +332,17 @@ def _send_video_via_save(
         _raise_vk_error(exc, "video.save")
 
     owner_id = save_response.get("owner_id")
-    video_id = save_response.get("video_id") or save_response.get("vid") or save_response.get("id")
+    video_id = (
+        save_response.get("video_id")
+        or save_response.get("vid")
+        or save_response.get("id")
+    )
     if owner_id is None or video_id is None:
         raise VkApiError("Invalid video data from VK API")
 
-    attachment = _build_attachment(
+    return _build_attachment(
         "video", owner_id, video_id, save_response.get("access_key")
     )
-    return _send_message(settings, vk_session, attachment=attachment)
 
 
 def _send_video_as_document(

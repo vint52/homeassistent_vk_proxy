@@ -103,7 +103,8 @@ curl -X POST http://localhost:80/send_image \
 ```json
 {
   "token": "INTERNAL_TOKEN",
-  "video": "https://example.com/video.mp4"
+  "video": "https://example.com/video.mp4",
+  "type": "video"
 }
 ```
 
@@ -117,4 +118,5 @@ curl -X POST http://localhost:80/send_video \
 
 Note: for group tokens `/send_video` uploads the file as a document, so the
 token must include the `docs` permission. If you need a true `video...`
-attachment, use a user access token with the `video` permission.
+attachment, set `VK_WALL_ACCESS_TOKEN` to a user access token with the
+`video` permission.
