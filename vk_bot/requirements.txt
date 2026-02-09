@@ -1,5 +1,7 @@
 fastapi
-httpx
+requests
+urllib3<2
+vk_api
 uvicorn[standard]
 python-dotenv
 mypy

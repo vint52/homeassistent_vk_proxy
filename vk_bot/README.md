@@ -18,6 +18,7 @@ The service loads `.env` automatically on startup.
 
 Additional environment variables:
 - `VK_GROUP_ID` - numeric community ID for `/send_post` (without `-`).
+- `VK_WALL_ACCESS_TOKEN` - optional user token used for `/send_post` (image upload).
 
 ## Run
 
@@ -66,8 +67,19 @@ curl -X POST http://localhost:80/send_post \
   -d '{"token":"INTERNAL_TOKEN","message":"New community post","image":"https://example.com/image.jpg"}'
 ```
 
-Note: `/send_post` requires a community access token with the `wall` permission.
-If you pass `image`, the token must also include the `photos` permission.
+Note: `/send_post` uses `VK_ACCESS_TOKEN` by default. If you pass `image`, VK
+rejects uploads with a community token. Set `VK_WALL_ACCESS_TOKEN` to a user
+token with the `wall` and `photos` permissions (the user must be a community
+admin).
+
+How to get `VK_WALL_ACCESS_TOKEN`:
+1. Create a VK app (Standalone) and get its `client_id`:
+   https://vk.com/editapp?act=create
+2. Open in a browser (replace `CLIENT_ID`):
+   https://oauth.vk.com/authorize?client_id=CLIENT_ID&display=page&redirect_uri=https://oauth.vk.com/blank.html&scope=wall,photos,offline&response_type=token&v=5.131
+   Or use https://vkhost.github.io/ and select your app.
+   Make sure "Access at any time" (`offline`) is enabled.
+3. Allow access and copy `access_token` from the redirect URL.
 
 `POST /send_image` with JSON body:
 

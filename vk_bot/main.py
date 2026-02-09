@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 
 from config import ConfigError, Settings, get_settings
@@ -10,7 +11,7 @@ from schemas import (
     SendPostRequest,
     SendVideoRequest,
 )
-from vk_api import (
+from vk_client import (
     VkApiError,
     send_image_url,
     send_message as send_vk_message,
@@ -34,7 +35,7 @@ async def send_message(
         raise HTTPException(status_code=401, detail="Invalid token")
 
     try:
-        return await send_vk_message(settings, payload.message)
+        return await run_in_threadpool(send_vk_message, settings, payload.message)
     except VkApiError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
@@ -48,7 +49,8 @@ async def send_post(
         raise HTTPException(status_code=401, detail="Invalid token")
 
     try:
-        return await send_vk_post(
+        return await run_in_threadpool(
+            send_vk_post,
             settings,
             payload.message,
             str(payload.image) if payload.image else None,
@@ -66,7 +68,7 @@ async def send_image(
         raise HTTPException(status_code=401, detail="Invalid token")
 
     try:
-        return await send_image_url(settings, str(payload.image))
+        return await run_in_threadpool(send_image_url, settings, str(payload.image))
     except VkApiError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
@@ -80,6 +82,6 @@ async def send_video(
         raise HTTPException(status_code=401, detail="Invalid token")
 
     try:
-        return await send_video_url(settings, str(payload.video))
+        return await run_in_threadpool(send_video_url, settings, str(payload.video))
     except VkApiError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc

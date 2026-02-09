@@ -5,7 +5,7 @@ from functools import lru_cache
 
 from dotenv import find_dotenv, load_dotenv
 
-load_dotenv(find_dotenv())
+load_dotenv(find_dotenv(), override=True)
 
 DEFAULT_REQUEST_TIMEOUT = 30.0
 
@@ -20,8 +20,8 @@ class Settings:
     vk_access_token: str
     vk_peer_id: str
     vk_api_version: str
+    vk_wall_access_token: Optional[str] = None
     vk_group_id: Optional[str] = None
-    vk_api_url: str = "https://api.vk.com/method/messages.send"
     request_timeout: float = DEFAULT_REQUEST_TIMEOUT
 
 
@@ -47,6 +47,7 @@ def get_settings() -> Settings:
     return Settings(
         internal_token=_require_env("INTERNAL_TOKEN"),
         vk_access_token=_require_env("VK_ACCESS_TOKEN"),
+        vk_wall_access_token=os.getenv("VK_WALL_ACCESS_TOKEN"),
         vk_peer_id=_require_env("VK_PEER_ID"),
         vk_api_version=os.getenv("VK_API_VERSION", "5.131"),
         vk_group_id=os.getenv("VK_GROUP_ID"),
